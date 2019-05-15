@@ -1,0 +1,117 @@
+#!/bin/bash
+
+#the help function incase someone doesn't know what all the flags do
+Usage(){
+cat << EOF
+You can use this command to delete and recover files from the recycle bin
+Options:
+-e      delete all the files in the recycle bin
+-f      ignore non existant files
+-i      prompt before every removal
+-h      help
+-r      restore files back to the original folder
+-v      this explains what can be done
+EOF
+}
+
+#Setting all the variables
+force=0
+interactive=0
+recursive=0
+restore=0
+verbose=0
+rb="/home/aj09/recyclebin/"
+
+
+#the case statment for all of the flags imputted with the rm command
+while getopts "hdefirsv:" OPTION; do
+        case ${OPTION} in
+        h)
+                Usage
+                exit 0
+                ;;
+        e)
+                rm -r ~/recyclebin/*
+                exit 0
+                ;;
+        f)
+                force=1
+                ;;
+        i)
+                interactive=1
+                ;;
+        r)
+                restore=1
+                ;;
+        v)
+                verbose=1
+                ;;
+        ?)
+                echo "you must put in a valid command"
+                Usage
+                exit 1
+                ;;
+        esac
+done
+
+
+# get rid of flags
+while [[ "@" == $(echo $1 | sed 's/^-.*/@/') ]];
+do
+        shift
+done
+ #current=`readlink -f $1`
+current=`pwd`
+
+#tests to see if ther is a directory
+test -d "$rb" || mkdir -p "$rb"
+
+
+#setting the if statement for remove without any flags
+if [[ "$verbose" -eq 0 && "$interactive" -eq 0 && "$force" -eq 0 && "$restore" -eq 0 ]]; then
+        echo $current>$rb"$1".txt
+        mv $1 $rb
+fi
+
+#setting the if statement for verbose
+if [[ "$verbose" -eq 1 && "$interactive" -eq 0 && "$force" -eq 0 ]]; then
+        echo "$current">$rb"$1".txt
+        mv -v $1 $rb
+fi
+
+#remove the files verbosely and interactively
+if [[ "$verbose" -eq 1 && "$interactive" -eq 1  && "$force" -eq 0 ]]; then
+        echo "$current">$rb"$1".txt
+        mv -vi $1 $rb
+fi
+
+#remove the files by force verbosley
+if [[ "$verbose" -eq 1 && "$interactive" -eq 0 && "$force" -eq 1 ]]; then
+        echo "$current">$rb"$1".txt
+        mv -vf $1 $rb
+fi
+
+#remove the files verbosely, interactively and by force
+if [[ "$verbose" -eq 1 && "$interactive" -eq 1 && "$force" -eq 1 ]]; then
+        echo "$current">$rb"$1".txt
+        mv -vif $1 $rb
+fi
+
+#remove the files interactively
+if [[ "$verbose" -eq 0 && "$interactive" -eq 1 && "$force" -eq 0 ]]; then
+        echo "$current">$rb$1.txt
+        mv -i $1 $rb
+fi
+
+#remove the files interactively and forcefully
+if [[ "$verbose" -eq 0 && "$interactive" -eq 1 && "$force" -eq 1 ]]; then
+        echo "$current">$rb"$1".txt
+        mv -if $1 $rb
+fi
+
+#This restores your files
+if [[ "$restore" -eq 1 ]]; then
+p=`cat $rb$1.txt`
+mkdir -p $p
+mv $rb$1 $p
+fi
